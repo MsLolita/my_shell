@@ -1,4 +1,4 @@
-# Web3Go Daily Claimer 🔹
+# MyShell Daily Claimer 🔹
 
 Discover the latest `<crypto/>` moves in our Telegram group: [Web3 Enjoyer Club](https://t.me/+tdC-PXRzhnczNDli) 🚀📈
 
@@ -15,7 +15,7 @@ You have to put private keys into `keys.txt` 🧬
 
 2. (Optional) Proxy Setup 🔒
 
-   Configure your proxies with the format `login:password@ip:port` in `inputs/proxies.txt` 🌐
+   Configure your proxies with the *ANY* (socks, http/s, ...) format in `inputs/proxies.txt` 🌐
 
    ![Proxy Configuration](https://github.com/MsLolita/VeloData/assets/58307006/a2c95484-52b6-497a-b89e-73b89d953d8c)
 
