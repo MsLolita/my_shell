@@ -16,7 +16,7 @@ from .utils import Web3Utils, logger
 class MyShell:
     def __init__(self, key: str, proxy: str = None):
         self.w3 = Web3Utils(key=key)
-        self.proxy = Proxy.from_str(proxy.strip()).as_url if proxy else None
+        # self.proxy = Proxy.from_str(proxy.strip()).as_url if proxy else None
 
         headers = {
             'authority': 'api.myshell.ai',
@@ -40,12 +40,13 @@ class MyShell:
 
         self.session = AsyncSession(
             headers=headers,
-            proxies={"http": self.proxy, "https": self.proxy},
+            # proxies={"http": self.proxy, "https": self.proxy},
             impersonate="chrome110",
             verify=False,
             trust_env=True
         )
 
+        self.proxy = None
         self.visitor_id = MyShell.get_visitor_id()
 
     async def define_proxy(self, proxy: str):
@@ -63,6 +64,7 @@ class MyShell:
             await session.get(MOBILE_PROXY_CHANGE_IP_LINK)
 
     async def login(self):
+        print((await self.session.get("http://httpbin.org/ip")).text)
         url = 'https://api.myshell.ai/auth/verifySignature'
 
         msg = await self.get_sign_msg()
