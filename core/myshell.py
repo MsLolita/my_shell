@@ -54,7 +54,8 @@ class MyShell:
             self.proxy = MOBILE_PROXY
 
         if proxy is not None:
-            self.proxy = Proxy.from_str(proxy.strip()).as_url
+            proxy = Proxy.from_str(proxy.strip()).as_url
+            self.session.proxies.update({"http": proxy, "https": proxy})
 
     @staticmethod
     async def change_ip():
