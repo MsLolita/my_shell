@@ -22,7 +22,7 @@ async def worker_task(key: str, proxy: str):
 
     await myshell.define_proxy(proxy)
     await myshell.login()
-    is_ok = await myshell.chat_transaction_and_claim()
+    is_ok = await myshell.chat_and_claim()
     myshell.logout()
     return is_ok
 
