@@ -55,7 +55,7 @@ class MyShell:
     async def define_proxy(self, proxy: str):
         if MOBILE_PROXY:
             #await MyShell.change_ip()
-            self.proxy = MOBILE_PROXY
+            proxy = MOBILE_PROXY
 
         if proxy is not None:
             proxy = Proxy.from_str(proxy.strip()).as_url
