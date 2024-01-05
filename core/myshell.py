@@ -64,7 +64,7 @@ class MyShell:
             await session.get(MOBILE_PROXY_CHANGE_IP_LINK)
 
     async def login(self):
-        print((await self.session.get("http://httpbin.org/ip")).text)
+        # print((await self.session.get("http://httpbin.org/ip")).text)
         url = 'https://api.myshell.ai/auth/verifySignature'
 
         msg = await self.get_sign_msg()

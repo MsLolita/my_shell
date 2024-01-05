@@ -8,7 +8,7 @@ from core.utils import logger, file_to_list, str_to_file
 class AutoReger:
     def __init__(self, accounts: list):
         self.accounts = accounts
-
+        # random.shuffle(self.accounts)
         self.success = 0
         self.semaphore = None
         self.delay = None
