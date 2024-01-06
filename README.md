@@ -6,7 +6,7 @@ Discover the latest `<crypto/>` moves in our Telegram group: [Web3 Enjoyer Club]
 
 You have the flexibility to customize parameters in `inputs/config.py` 🧬
 
-![Configuration](https://github.com/FlorianREGAZ/Python-Tls-Client/assets/58307006/30ba627b-0991-4551-8bae-a5222f14d134)
+![Configuration](https://github.com/MsLolita/my_shell/assets/58307006/fca4e44d-ecb2-42d6-b414-bcbe61a2555c)
 
 1. (Optional) Private keys Configuration 
 You have to put private keys into `keys.txt` 🧬
