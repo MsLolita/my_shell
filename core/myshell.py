@@ -12,13 +12,13 @@ from wonderwords import RandomSentence
 from curl_cffi.requests import AsyncSession
 from fake_useragent import UserAgent
 
-from inputs.config import MOBILE_PROXY_CHANGE_IP_LINK, MOBILE_PROXY
+from inputs.config import MOBILE_PROXY_CHANGE_IP_LINK, MOBILE_PROXY, SEND_OPBNB_TX
 from .utils import Web3Utils, logger
 
 
 class MyShell:
-    def __init__(self, key: str, proxy: str = None, rpc_url: str = 'https://opbnb-mainnet-rpc.bnbchain.org'):
-        self.w3 = Web3Utils(http_provider=rpc_url, key=key)
+    def __init__(self, key: str, proxy: str = None):
+        self.w3 = Web3Utils(key=key)
         # self.proxy = Proxy.from_str(proxy.strip()).as_url if proxy else None
 
         headers = {
@@ -110,28 +110,21 @@ class MyShell:
 
     async def chat_transaction_and_claim(self):
         await self.chat_with_bot()
-        await asyncio.sleep(3)
-        transaction_success, transaction_hash = await self.send_transaction(gwei=0.000010009)
-        if not transaction_success:
-            transaction_success, transaction_hash = await self.send_transaction(gwei=0.000020009)
-        if not transaction_success:
-            logger.error("вообще не получилось сделать транзу")
-        await asyncio.sleep(3)
-        if transaction_success:
-            await asyncio.sleep(5)
-            await self.post_transaction_hash(transaction_hash)
-            await asyncio.sleep(20)
+
+        if SEND_OPBNB_TX:
+            await self.send_opbnb_tx()
+
+        await asyncio.sleep(random.uniform(20, 40))
         return await self.claim_all()
 
     async def chat_with_bot(self):
-        bot_ids = ["864", "4976", "6958", "1700067629"]
+        bot_ids = ["1700067629"]  # "864", "4976", "6958",
         random.shuffle(bot_ids)
 
         for bot_id in bot_ids:
             text = RandomSentence().sentence()
             response = await self.send_bot_msg(bot_id, text)
             logger.info(f"Sent message to bot: {text} | Answer: {response[:10]}...")
-            await asyncio.sleep(random.uniform(20, 40))
 
     async def send_bot_msg(self, bot_id: str, msg: str):
         json_data = {
@@ -146,11 +139,22 @@ class MyShell:
         if "MESSAGE_REPLY_SSE_ELEMENT_EVENT_NAME_USER_SENT_MESSAGE_REPLIED" in response.text:
             return json.loads(response.text.split("data: ")[-1])["message"]["text"]
 
+    async def send_opbnb_tx(self):
+        try:
+            transaction_success, transaction_hash = await self.send_transaction(gwei=0.0000101)
+            if transaction_success:
+                logger.info(f"Sent transaction: {transaction_hash}")
+                await asyncio.sleep(10)
+                await self.post_transaction_hash(transaction_hash)
+        except Exception as e:
+            logger.error(f"Failed to send transaction: {e}")
+
     async def send_transaction(self, gwei):
         w3_opbnb = Web3(Web3.HTTPProvider('https://opbnb-mainnet-rpc.bnbchain.org'))
+
         estimation_transaction = {
             'from': self.w3.acct.address,
-            'to': HexBytes(self.w3.acct.address),
+            'to': HexBytes("0x4f9ce7a71eb3795d7d38694fdb0d897dd055e26d"),
             'nonce': w3_opbnb.eth.get_transaction_count(Web3.to_checksum_address(self.w3.acct.address)),
             'data': '0x0bf74764000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000076d797368656c6c00000000000000000000000000000000000000000000000000',
             'type': '0x2',
@@ -159,7 +163,7 @@ class MyShell:
         estimated_gas = w3_opbnb.eth.estimate_gas(estimation_transaction)
         transaction = {
             'from': self.w3.acct.address,
-            'to': HexBytes(self.w3.acct.address),
+            'to': HexBytes("0x4f9ce7a71eb3795d7d38694fdb0d897dd055e26d"),
             'gas': estimated_gas,
             'maxFeePerGas': Web3.to_wei(gwei, "gwei"),
             'maxPriorityFeePerGas': Web3.to_wei(0.00001, "gwei"),
@@ -174,22 +178,20 @@ class MyShell:
                 tx_hash = w3_opbnb.eth.send_raw_transaction(signed.rawTransaction)
                 receipt = w3_opbnb.eth.wait_for_transaction_receipt(tx_hash, timeout=240)
                 if receipt.status == 1:
-                    logger.info(f"transaction done. Hash: {tx_hash.hex()}. Gwei = {gwei}")
                     return True, tx_hash.hex()
                 else:
-                    logger.error(f"транза зафелилась, hash: {tx_hash.hex()}. Gwei = {gwei}")
                     return False, tx_hash.hex()
             except TimeExhausted as te:
-                logger.error(f"Ошибка при проверке транзакции: {te}. Попытка еще...")
-        logger.error("Все попытки отправки транзакции завершились неудачно")
-        return False
+                pass
+        return False, ""
 
     async def post_transaction_hash(self, tx_hash: str):
         json_data = {
             'txHash': tx_hash,
         }
 
-        response = await self.session.post('https://api.myshell.ai/v1/season/task/get_blockchain_tx_status', json=json_data)
+        response = await self.session.post('https://api.myshell.ai/v1/season/task/get_blockchain_tx_status',
+                                           json=json_data)
         return response.json() == {}
 
     async def claim_all(self):

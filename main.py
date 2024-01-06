@@ -1,6 +1,7 @@
 import asyncio
 import ctypes
 import os
+import sys
 
 from core.autoreger import AutoReger
 from core.myshell import MyShell
@@ -12,7 +13,7 @@ from inputs.config import KEYS_FILE_PATH, PROXIES_FILE_PATH, THREADS, CUSTOM_DEL
 def bot_info(name: str = ""):
     tprint(name)
 
-    if os.name == 'nt':
+    if sys.platform == 'win32':
         ctypes.windll.kernel32.SetConsoleTitleW(f"{name}")
     print("EnJoYeR's <crypto/> moves: https://t.me/+tdC-PXRzhnczNDli\n")
 
@@ -34,5 +35,7 @@ async def main():
 
 
 if __name__ == '__main__':
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    if sys.platform == 'win32':
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
     asyncio.run(main())

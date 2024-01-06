@@ -61,12 +61,14 @@ class AutoReger:
     def logs(account_id: str, account: tuple, is_success: bool = False):
         if is_success:
             log_func = logger.success
+            log_msg = "Claimed!"
             file_name = "success"
         else:
             log_func = logger.warning
+            log_msg = "Failed!"
             file_name = "failed"
 
         file_msg = "|".join(str(x) for x in account)
         str_to_file(f"./logs/{file_name}.txt", file_msg)
 
-        log_func(f"Account: {account_id}... Claimed!")
+        log_func(f"Account: {account_id}... {log_msg}")
