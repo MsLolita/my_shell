@@ -118,33 +118,40 @@ class MyShell:
         return await self.claim_all()
 
     async def chat_with_bot(self):
-        bot_ids = ["1700067629"]  # "864", "4976", "6958",
+        bot_ids = ["1700067629"]
         random.shuffle(bot_ids)
 
         for bot_id in bot_ids:
             text = RandomSentence().sentence()
             response = await self.send_bot_msg(bot_id, text)
-            logger.info(f"Sent message to bot: {text} | Answer: {response[:10]}...")
+            response_text = response[:10] if response else response
+            logger.info(f"Sent message to bot: {text} | Answer: {response_text}...")
+            await asyncio.sleep(random.uniform(20, 40))
 
     async def send_bot_msg(self, bot_id: str, msg: str):
-        json_data = {
-            'botId': bot_id,
-            'conversation_scenario': 3,
-            'message': msg,
-            'messageType': 1,
-        }
+        for _ in range(5):
+            try:
+                json_data = {
+                    'botId': bot_id,
+                    'conversation_scenario': 3,
+                    'message': msg,
+                    'messageType': 1,
+                }
 
-        response = await self.session.post('https://api.myshell.ai/v1/bot/chat/send_message', json=json_data)
+                response = await self.session.post('https://api.myshell.ai/v1/bot/chat/send_message', json=json_data)
 
-        if "MESSAGE_REPLY_SSE_ELEMENT_EVENT_NAME_USER_SENT_MESSAGE_REPLIED" in response.text:
-            return json.loads(response.text.split("data: ")[-1])["message"]["text"]
+                if "MESSAGE_REPLY_SSE_ELEMENT_EVENT_NAME_USER_SENT_MESSAGE_REPLIED" in response.text:
+                    return json.loads(response.text.split("data: ")[-1])["message"]["text"]
+            except Exception as e:
+                logger.error(f"Failed to send message: {e}")
+                await asyncio.sleep(2)
 
     async def send_opbnb_tx(self):
         try:
             transaction_success, transaction_hash = await self.send_transaction(gwei=0.0000101)
             if transaction_success:
                 logger.info(f"Sent transaction: {transaction_hash}")
-                await asyncio.sleep(10)
+                await asyncio.sleep(15)
                 await self.post_transaction_hash(transaction_hash)
         except Exception as e:
             logger.error(f"Failed to send transaction: {e}")
@@ -195,10 +202,46 @@ class MyShell:
         return response.json() == {}
 
     async def claim_all(self):
-        url = 'https://api.myshell.ai/v1/season/task/claim_all'
+        for _ in range(6):
+            try:
+                url = 'https://api.myshell.ai/v2/season/task/claim_all'
 
-        response = await self.session.post(url)
-        return response.json() == {}
+                json_data = {
+                    'taskTypes': [
+                        'SEASON_TASK_TYPE_DAILY_MESSAGE',
+                        'SEASON_TASK_TYPE_DC_INTERACTION',
+                        'SEASON_TASK_TYPE_BLOCKCHAIN_INTERACTION',
+                        'SEASON_TASK_TYPE_BIND_DC_ACCOUNT',
+                        'SEASON_TASK_TYPE_TALK_TO_FAMOUS_ROLES',
+                        'SEASON_TASK_TYPE_EXPERIENCE_IMAGE_BOTS',
+                        'SEASON_TASK_TYPE_TALK_TO_LANGUAGE_LEARNING_BOTS',
+                        'SEASON_TASK_TYPE_TALK_TO_TRANSLATION_BOTS',
+                        'SEASON_TASK_TYPE_USE_VOICE_CALL',
+                        'SEASON_TASK_TYPE_TALK_TO_SHELL_LLM_BOTS',
+                        'SEASON_TASK_TYPE_TALK_TO_RPG_BOTS',
+                        'SEASON_TASK_TYPE_USE_VIDEO_CALL',
+                        'SEASON_TASK_TYPE_TALK_TO_JOB_BOTS',
+                        'SEASON_TASK_TYPE_TALK_TO_LEARNING_BOTS',
+                        'SEASON_TASK_TYPE_TALK_TO_DEV_BOTS',
+                        'SEASON_TASK_TYPE_CREATE_BOT',
+                        'SEASON_TASK_TYPE_USE_VOICE_CLONE',
+                        'SEASON_TASK_TYPE_BOT_MASTER',
+                        'SEASON_TASK_TYPE_INVITEE_MESSAGE_LV1',
+                        'SEASON_TASK_TYPE_INVITEE_MESSAGE_LV2',
+                        'SEASON_TASK_TYPE_COMPENSATE',
+                        'SEASON_TASK_TYPE_PUBLIC_VOICE_INCOME',
+                        'SEASON_TASK_TYPE_BIND_DC_ACCOUNT',
+                    ],
+                }
+                response = await self.session.post(url, json=json_data)
+
+                if response.status_code == 200:
+                    if response.json() == {}:
+                        return True
+                print(response.text)
+            except Exception as e:
+                print(e)
+            await asyncio.sleep(5)
 
     async def claim(self, task_id: str):
         json_data = {
