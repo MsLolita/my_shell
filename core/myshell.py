@@ -6,6 +6,7 @@ import time
 
 from better_proxy import Proxy
 from hexbytes import HexBytes
+from tenacity import retry, stop_after_attempt, stop_after_delay
 from web3 import Web3
 from web3.exceptions import TimeExhausted
 from wonderwords import RandomSentence
@@ -251,6 +252,45 @@ class MyShell:
         response = await self.session.post('https://api.myshell.ai/v1/season/task/claim', json=json_data)
         return response.json() == {}
 
+    async def get_user_info(self):
+        url = 'https://api.myshell.ai/v1/user/get_info'
+
+        json_data = {}
+
+        response = await self.session.post(url, json=json_data)
+        return response.json()
+
+    async def get_user_points(self):
+        user_info = await self.get_user_info()
+        return user_info.get("userDetail", {}).get("summary", {}).get("lastSeasonInfo", {}).get("point", 0)
+
+    @retry(stop=(stop_after_delay(3) | stop_after_attempt(5)))
+    async def exchange_points(self):
+        points = await self.get_user_points()
+
+        if points == 0:
+            logger.info("Already exchanged points, no points detected")
+            return True
+
+        json_data = {
+            'pointAmount': points,
+        }
+
+        response = await self.session.post(
+            'https://api.myshell.ai/v1/shell_coins/exchange_shell_coin_with_season_points',
+            json=json_data,
+        )
+        resp = response.json()
+        logger.debug(resp)
+        if tokens := resp.get("order", {}).get("amount"):
+            logger.info(f"Converted {points} points to {tokens} tokens")
+            return True
+        elif resp.get("reason") == "ERROR_REASON_NOT_ENOUGH_SEASON_POINTS":
+            logger.info("No points error")
+            return True
+
+        raise Exception(f"Failed to exchange points: {resp}")
+
     def logout(self):
         self.session.close()
 
@@ -258,4 +298,4 @@ class MyShell:
     def get_visitor_id():
         segment = secrets.token_hex(7)
         return (f'{segment}-{secrets.token_hex(7)}-{secrets.token_hex(4)}'
-            f'-{random.randint(100000, 999999)}-{segment}')
+                f'-{random.randint(100000, 999999)}-{segment}')

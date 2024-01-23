@@ -7,7 +7,7 @@ from core.autoreger import AutoReger
 from core.myshell import MyShell
 from art import tprint
 
-from inputs.config import KEYS_FILE_PATH, PROXIES_FILE_PATH, THREADS, CUSTOM_DELAY
+from inputs.config import KEYS_FILE_PATH, PROXIES_FILE_PATH, THREADS, CUSTOM_DELAY, EXCHANGE_POINTS_ONLY
 
 
 def bot_info(name: str = ""):
@@ -23,7 +23,12 @@ async def worker_task(key: str, proxy: str):
 
     await myshell.define_proxy(proxy)
     await myshell.login()
-    is_ok = await myshell.chat_transaction_and_claim()
+
+    if EXCHANGE_POINTS_ONLY:
+        is_ok = await myshell.exchange_points()
+    else:
+        is_ok = await myshell.chat_transaction_and_claim()
+
     myshell.logout()
     return is_ok
 
